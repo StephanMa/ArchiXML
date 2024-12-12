@@ -427,7 +427,7 @@ func (s server) searchDocuments(w http.ResponseWriter, r *http.Request, ps httpr
 			}
 		}
 	} else {
-		iter := s.db.NewIter(nil)
+		iter, err := s.db.NewIter(nil)
 		defer iter.Close()
 		for iter.First(); iter.Valid(); iter.Next() {
 			var document map[string]any
@@ -464,8 +464,14 @@ func (s server) getDocument(w http.ResponseWriter, r *http.Request, ps httproute
 }
 
 func (s server) reindex() {
-	iter := s.db.NewIter(nil)
+	iter, err := s.db.NewIter(nil)
+
 	defer iter.Close()
+	if err != nil {
+		log.Printf("Unable to reindex, %s", err)
+		return
+	}
+
 	for iter.First(); iter.Valid(); iter.Next() {
 		var document map[string]any
 		err := json.Unmarshal(iter.Value(), &document)
@@ -477,7 +483,7 @@ func (s server) reindex() {
 }
 
 func main() {
-	s, err := newServer("docdb.data", "8080")
+	s, err := newServer("archixml.data", "8080")
 	if err != nil {
 		log.Fatal(err)
 	}
